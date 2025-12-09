@@ -1,0 +1,406 @@
+/* Full-viewport canvas and a subtle background */
+html, body {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	overflow: hidden;
+	background: radial-gradient(1200px 800px at 50% 40%, #1a1a1a 0%, #0d0d0d 60%, #000 100%);
+	color: #eee;
+	font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+canvas {
+	display: block; /* removes inline gap */
+	cursor: default; /* show cursor over the 3D canvas */
+}
+
+/* Inspector panel */
+.inspector {
+	position: fixed;
+	right: 18px;
+	top: 18px;
+	width: 220px;
+	max-height: 60vh;
+	background: rgba(10,10,12,0.7);
+	color: #eee;
+	border-radius: 8px;
+	box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+	overflow: hidden; /* container clips; inner content will scroll */
+	font-size: 13px;
+	backdrop-filter: blur(6px);
+	display: flex;
+	flex-direction: column;
+}
+.inspector.dragging {
+	cursor: grabbing;
+}
+.inspector.dragging .inspector-header {
+	cursor: grabbing;
+}
+.inspector.collapsed {
+	max-height: none;
+}
+.inspector.collapsed .inspector-content,
+.inspector.collapsed .inspector-footer {
+	display: none;
+}
+.inspector-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px 10px;
+	font-weight: 600;
+	border-bottom: 1px solid rgba(255,255,255,0.04);
+	cursor: grab;
+	user-select: none;
+	touch-action: none;
+}
+.inspector-title { pointer-events: none; }
+.inspector-toggle {
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	border-radius: 4px;
+	background: rgba(255,255,255,0.1);
+	color: inherit;
+	font-size: 16px;
+	line-height: 1;
+	cursor: pointer;
+}
+.inspector-toggle:hover {
+	background: rgba(255,255,255,0.18);
+}
+.inspector-toggle:active {
+	background: rgba(255,255,255,0.26);
+}
+.inspector-content {
+	padding: 8px 10px;
+	overflow-y: auto;
+	flex: 1 1 auto;
+	min-height: 0; /* allow flex child to shrink so scrolling kicks in */
+}
+.inspector .group {
+	margin-bottom: 8px;
+}
+.inspector .inspector-global {
+	margin-bottom: 10px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.inspector .inspector-global label {
+	display: flex;
+	align-items: center;
+}
+.inspector .group .title {
+	display:flex;align-items:center;justify-content:space-between;padding:4px 0;
+}
+.inspector .subitem { padding-left: 10px; display:flex; align-items:center; }
+.inspector .inspector-footer { padding:6px 10px; font-size:11px; opacity:0.8; border-top:1px solid rgba(255,255,255,0.03); }
+.inspector input[type="checkbox"] { width:14px; height:14px; margin-right:8px; }
+
+.element-info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 12px;
+	padding: 10px;
+	border-radius: 8px;
+	background: rgba(255,255,255,0.05);
+	border: 1px solid rgba(255,255,255,0.08);
+}
+.element-info-main {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.element-symbol {
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1;
+}
+.element-text {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+.element-info[data-cat="alkali-metal"] { background: rgba(255, 99, 71, 0.18); border-color: rgba(255, 99, 71, 0.32); }
+.element-info[data-cat="alkaline-earth-metal"] { background: rgba(255, 176, 59, 0.2); border-color: rgba(255, 176, 59, 0.35); }
+.element-info[data-cat="transition-metal"] { background: rgba(120, 180, 255, 0.2); border-color: rgba(120, 180, 255, 0.35); }
+.element-info[data-cat="post-transition-metal"] { background: rgba(170, 200, 255, 0.18); border-color: rgba(170, 200, 255, 0.3); }
+.element-info[data-cat="metalloid"] { background: rgba(176, 255, 214, 0.2); border-color: rgba(176, 255, 214, 0.32); }
+.element-info[data-cat="nonmetal"] { background: rgba(255, 120, 168, 0.2); border-color: rgba(255, 120, 168, 0.32); }
+.element-info[data-cat="halogen"] { background: rgba(255, 214, 102, 0.2); border-color: rgba(255, 214, 102, 0.32); }
+.element-info[data-cat="noble-gas"] { background: rgba(159, 211, 255, 0.2); border-color: rgba(159, 211, 255, 0.35); }
+.element-info[data-cat="lanthanide"] { background: rgba(199, 155, 255, 0.2); border-color: rgba(199, 155, 255, 0.32); }
+.element-info[data-cat="actinide"] { background: rgba(255, 155, 242, 0.2); border-color: rgba(255, 155, 242, 0.32); }
+.element-info[data-cat="unknown"] { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+
+.plane-controls {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 10px;
+	margin-bottom: 12px;
+	border: 1px solid rgba(255,255,255,0.08);
+	border-radius: 8px;
+	background: rgba(255,255,255,0.03);
+}
+.plane-controls-title {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	opacity: 0.7;
+}
+.plane-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: inherit;
+}
+.plane-toggle input {
+	width: 14px;
+	height: 14px;
+	margin: 0;
+}
+}
+.element-name {
+	font-size: 17px;
+	font-weight: 600;
+}
+.element-meta {
+	font-size: 12px;
+	opacity: 0.75;
+}
+.element-config-block {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.element-config-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	opacity: 0.65;
+}
+.element-config {
+	font-family: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+	font-size: 12px;
+	line-height: 1.4;
+	color: #f4f4f4;
+	background: rgba(255,255,255,0.08);
+	padding: 4px 6px;
+	border-radius: 4px;
+	display: inline-block;
+	max-width: 100%;
+	word-break: break-word;
+	white-space: normal;
+}
+.element-extra {
+	font-size: 12px;
+	opacity: 0.8;
+}
+.element-picker-btn {
+	align-self: flex-start;
+	padding: 6px 12px;
+	background: rgba(118,167,255,0.18);
+	border: 1px solid rgba(118,167,255,0.35);
+	border-radius: 6px;
+	color: #eef3ff;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+.element-picker-btn:hover {
+	background: rgba(118,167,255,0.3);
+	border-color: rgba(140,190,255,0.5);
+}
+.element-picker-btn:active {
+	background: rgba(118,167,255,0.45);
+}
+
+.subshell-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.periodic-overlay {
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 40px 24px;
+	background: rgba(4,6,12,0.75);
+	backdrop-filter: blur(6px);
+	z-index: 100;
+}
+.periodic-overlay.visible {
+	display: flex;
+}
+.periodic-dialog {
+	background: rgba(14,16,24,0.94);
+	border: 1px solid rgba(255,255,255,0.1);
+	border-radius: 12px;
+	width: min(1100px, calc(100vw - 48px));
+	max-height: calc(100vh - 64px);
+	display: flex;
+	flex-direction: column;
+	padding: 18px 20px 20px;
+	box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+.periodic-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+.periodic-header h2 {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+}
+.periodic-close {
+	border: none;
+	background: rgba(255,255,255,0.08);
+	color: inherit;
+	width: 32px;
+	height: 32px;
+	border-radius: 6px;
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+.periodic-close:hover {
+	background: rgba(255,255,255,0.16);
+}
+.periodic-close:active {
+	background: rgba(255,255,255,0.24);
+}
+.periodic-hint {
+	font-size: 12px;
+	opacity: 0.75;
+	margin-bottom: 12px;
+}
+.periodic-grid {
+	flex: 1 1 auto;
+	overflow: auto;
+	padding: 6px 10px 6px 2px;
+}
+.periodic-grid-inner {
+	display: grid;
+	grid-template-columns: repeat(18, minmax(64px, 1fr));
+	grid-auto-rows: 78px;
+	gap: 12px;
+	position: relative;
+}
+.periodic-cell {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 10px 10px 8px;
+	border-radius: 6px;
+	border: 1px solid rgba(255,255,255,0.08);
+	background: rgba(255,255,255,0.05);
+	color: #f6f6f6;
+	text-align: left;
+	cursor: pointer;
+	transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+	overflow: hidden;
+}
+.periodic-cell:hover {
+	transform: translateY(-2px);
+	border-color: rgba(255,255,255,0.24);
+	background: rgba(255,255,255,0.1);
+}
+.periodic-cell:focus-visible {
+	outline: 2px solid rgba(120,180,255,0.9);
+	outline-offset: 2px;
+}
+.periodic-cell.is-selected {
+	border-color: rgba(102,178,255,0.9);
+	background: rgba(102,178,255,0.28);
+	box-shadow: 0 0 0 2px rgba(102,178,255,0.25);
+}
+.periodic-cell .number {
+	font-size: 11px;
+	opacity: 0.7;
+}
+.periodic-cell .symbol {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.1;
+}
+.periodic-cell .name {
+	font-size: 11px;
+	opacity: 0.78;
+	line-height: 1.2;
+	white-space: normal;
+	word-break: break-word;
+	overflow: hidden;
+}
+
+.periodic-cell[data-cat="alkali-metal"] {
+	background: rgba(255, 99, 71, 0.16);
+	border-color: rgba(255, 99, 71, 0.32);
+}
+.periodic-cell[data-cat="alkaline-earth-metal"] {
+	background: rgba(255, 176, 59, 0.18);
+	border-color: rgba(255, 176, 59, 0.32);
+}
+.periodic-cell[data-cat="transition-metal"] {
+	background: rgba(120, 180, 255, 0.16);
+	border-color: rgba(120, 180, 255, 0.3);
+}
+.periodic-cell[data-cat="post-transition-metal"] {
+	background: rgba(170, 200, 255, 0.16);
+	border-color: rgba(170, 200, 255, 0.28);
+}
+.periodic-cell[data-cat="metalloid"] {
+	background: rgba(176, 255, 214, 0.16);
+	border-color: rgba(176, 255, 214, 0.32);
+}
+.periodic-cell[data-cat="nonmetal"] {
+	background: rgba(255, 120, 168, 0.16);
+	border-color: rgba(255, 120, 168, 0.3);
+}
+.periodic-cell[data-cat="halogen"] {
+	background: rgba(255, 214, 102, 0.16);
+	border-color: rgba(255, 214, 102, 0.32);
+}
+.periodic-cell[data-cat="noble-gas"] {
+	background: rgba(159, 211, 255, 0.18);
+	border-color: rgba(159, 211, 255, 0.32);
+}
+.periodic-cell[data-cat="lanthanide"] {
+	background: rgba(199, 155, 255, 0.18);
+	border-color: rgba(199, 155, 255, 0.3);
+}
+.periodic-cell[data-cat="actinide"] {
+	background: rgba(255, 155, 242, 0.18);
+	border-color: rgba(255, 155, 242, 0.3);
+}
+
+.periodic-cell[data-cat="alkali-metal"].is-selected,
+.periodic-cell[data-cat="alkaline-earth-metal"].is-selected,
+.periodic-cell[data-cat="transition-metal"].is-selected,
+.periodic-cell[data-cat="post-transition-metal"].is-selected,
+.periodic-cell[data-cat="metalloid"].is-selected,
+.periodic-cell[data-cat="nonmetal"].is-selected,
+.periodic-cell[data-cat="halogen"].is-selected,
+.periodic-cell[data-cat="noble-gas"].is-selected,
+.periodic-cell[data-cat="lanthanide"].is-selected,
+.periodic-cell[data-cat="actinide"].is-selected {
+	background: rgba(255,255,255,0.22);
+	color: #0c1624;
+	border-color: rgba(255,255,255,0.6);
+}

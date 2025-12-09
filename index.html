@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>SPDF</title>
+		<link rel="stylesheet" href="./style.css" />
+
+		<!-- Import map to resolve bare specifiers used by Three.js examples (e.g., OrbitControls imports 'three') -->
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+					"three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<!-- The renderer's canvas will be appended to body by script.js -->
+		<div id="inspector" class="inspector" aria-hidden="false">
+			<div class="inspector-header">
+				<span class="inspector-title">Inspector</span>
+				<button type="button" class="inspector-toggle" aria-expanded="true" aria-controls="inspector-content" title="Collapse inspector">&#8722;</button>
+			</div>
+			<div id="inspector-content" class="inspector-content">
+				<div id="element-info" class="element-info" data-cat="alkaline-earth-metal">
+					<div class="element-info-main">
+						<div class="element-symbol" id="element-symbol">Ca</div>
+						<div class="element-text">
+							<div class="element-name" id="element-name">Calcium</div>
+							<div class="element-meta" id="element-meta">Z=20 | Period 4 | Group 2 | Alkaline Earth Metal</div>
+						</div>
+					</div>
+					<div class="element-config-block">
+						<span class="element-config-label">Electron configuration</span>
+						<code class="element-config" id="element-config">[Ar] 4s2</code>
+					</div>
+					<div class="element-extra" id="element-extra">Valence electrons: 2 | Block S | Standard state Solid</div>
+					<button id="element-picker" type="button" class="element-picker-btn" aria-haspopup="dialog" aria-expanded="false">Choose element</button>
+				</div>
+				<div id="plane-controls" class="plane-controls" role="group" aria-label="Axis planes">
+					<span class="plane-controls-title">Axis planes</span>
+					<label class="plane-toggle">
+						<input type="checkbox" data-axis="x" />
+						<span>X plane (YZ)</span>
+					</label>
+					<label class="plane-toggle">
+						<input type="checkbox" data-axis="y" />
+						<span>Y plane (XZ)</span>
+					</label>
+					<label class="plane-toggle">
+						<input type="checkbox" data-axis="z" />
+						<span>Z plane (XY)</span>
+					</label>
+				</div>
+				<div id="node-controls" class="plane-controls" role="group" aria-label="Nodal surfaces">
+					<span class="plane-controls-title">Nodal surfaces</span>
+					<label class="plane-toggle">
+						<input id="node-toggle" type="checkbox" />
+						<span>Show nodal planes/cones</span>
+					</label>
+				</div>
+				<div id="subshell-list" class="subshell-list"></div>
+			</div>
+			<div class="inspector-footer">R / Esc = Reset</div>
+		</div>
+
+		<div id="periodic-overlay" class="periodic-overlay" aria-hidden="true">
+			<div class="periodic-dialog" role="dialog" aria-modal="true" aria-labelledby="periodic-title">
+				<div class="periodic-header">
+					<h2 id="periodic-title">Periodic Table</h2>
+					<button type="button" id="periodic-close" class="periodic-close" aria-label="Close periodic table">&times;</button>
+				</div>
+				<div id="periodic-hint" class="periodic-hint">Select an element to load its electron configuration and orbital visualization.</div>
+				<div class="periodic-grid">
+					<div id="periodic-grid-inner" class="periodic-grid-inner" role="grid" aria-describedby="periodic-hint"></div>
+				</div>
+			</div>
+		</div>
+		<noscript>This demo requires JavaScript to run.</noscript>
+		<script type="module" src="./script.js"></script>
+	</body>
+	</html>
